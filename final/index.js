@@ -10,10 +10,18 @@ document.onreadystatechange = () => {
         });
 
         new Carousel({
-            arrowPrevious: "#Bigprevious",
-            arrowNext: "#Bignext",
-            track: "#Bigtrack",
+            arrowNext: "#Outnext",
+            arrowPrevious: "#Outprevious",
             moveItems: 1,
+            track: "#Outtrack",
+        });
+
+        new Carousel({
+            arrowNext: "#Bignext",
+            arrowPrevious: "#Bigprevious",
+            enabledPoint: true,
+            moveItems: 1,
+            track: "#Bigtrack",
         });
     }
 };
