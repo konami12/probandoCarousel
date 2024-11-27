@@ -22,11 +22,12 @@
 body {
     background-color: var(--primero);
     overflow-x: hidden;
+    padding-bottom: 200px;
 }
 
 main {
-    height: 100vh;
-    width: 100vw;
+    height: 100%;
+    width: 100%;
     display: flex;
     align-items: center;
     place-content: center;
@@ -126,7 +127,7 @@ section {
 .carousel__item2 {
     flex-shrink: 0;
     width: 100%;
-    height: 400px;
+    height: 800px;
     font-weight: bold;
     font-size: 6rem;
     font-family: sans-serif;
@@ -148,4 +149,26 @@ section {
 .carousel__item:nth-child(odd),
 .carousel__item2:nth-child(odd) {
     background-color: var(--quinto);
+}
+
+
+.carousel__buttons {
+    bottom: -30px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    position: absolute;
+    width: 100%;
+    button {
+        background-color: #C0C0C0;
+        opacity: .5;
+        border-radius: 50% 50%;
+        border: 0;
+        cursor: pointer;
+        height: 12px;
+        width: 12px;
+    }
+    .carousel__button--active {
+        opacity: 1;
+    }
 }
