@@ -1,26 +1,35 @@
 class Carousel {
 
-    #arrowNext = "";     // Selector para la flecha de siguiente
-    #arrowPrevious = ""; // Selector para la flecha de anterior
-    #endPoint = 0;       // Valor del desplazamiento máximo permitido
-    #itemSize = 0;       // Tamaño de un elemento del carrusel, incluyendo el gap
-    #moveItems = 0;      // Número de elementos a mover por cada acción de "anterior" o "siguiente"
-    #oldTrack = 0;       // Almacena el ancho del carrusel
-    #pixels = 0;         // Valor del desplazamiento actual en píxeles
-    #scroll = 0;         // Almacena el scroll máximo permitido
-    #time = 0;           // Duración de la animación de transición
-    #track = "";         // Selector para el contenedor que contiene los elementos del carrusel
-    #viewItems = 0;      // Número de elementos visibles dentro del carrusel
+    #arrowNext = "";       // Selector para la flecha de siguiente
+    #arrowPrevious = "";   // Selector para la flecha de anterior
+    #endPoint = 0;         // Valor del desplazamiento máximo permitido
+    #itemSize = 0;         // Tamaño de un elemento del carrusel, incluyendo el gap
+    #moveItems = 0;        // Número de elementos a mover por cada acción de "anterior" o "siguiente"
+    #oldTrack = 0;         // Almacena el ancho del carrusel
+    #pixels = 0;           // Valor del desplazamiento actual en píxeles
+    #scroll = 0;           // Almacena el scroll máximo permitido
+    #time = 0;             // Duración de la animación de transición
+    #track = "";           // Selector para el contenedor que contiene los elementos del carrusel
+    #viewItems = 0;        // Número de elementos visibles dentro del carrusel
+    #enabledPoint = false; // Permite la creación de botones de navegación
 
+    /**
+     * Inicializa una nueva instancia de la clase Carousel.
+     *
+     * @param {Object} setting - configuración del carrusel
+     * @returns {void}
+     */
     constructor(setting){
         this.#track = document.querySelector(setting?.track || "empty") || null;
         this.#arrowNext = document.querySelector(setting?.arrowNext || "empty") || null;
         this.#arrowPrevious = document.querySelector(setting?.arrowPrevious || "empty") || null;
         this.#time = setting?.time || 500;
         this.#moveItems = setting?.moveItems || 0;
+        this.#enabledPoint = setting?.enabledPoint || false;
         this.#setup();
         this.#bindEvents();
-        window.addEventListener("resize", this.#debounce(() => { 
+        this.#createPointer();
+        window.addEventListener("resize", this.#debounce(() => {
             if (this.#oldTrack !== this.#track.offsetWidth)
                 this.#setup(true)
         }, 200));
@@ -39,6 +48,8 @@ class Carousel {
         this.#pixels = isNext
         ? Math.min(this.#pixels + MOVEMENT_SIZE, this.#endPoint)
         : Math.max(this.#pixels - MOVEMENT_SIZE, 0);
+
+        console.log(this.#pixels);
         this.#move();
     };
 
@@ -106,6 +117,7 @@ class Carousel {
      * En dispositivos móviles, habilita el desplazamiento automático.
      *
      * @private
+     * @param {boolean} [reset=false] - Restablece la posición del carrusel a su estado inicial.
      * @returns {void}
      */
     #setup(reset = false) {
@@ -148,6 +160,65 @@ class Carousel {
         this.#arrowPrevious.style.display = normal || this.#pixels === 0 ? "none" : DISPLAY_VALUE;
         this.#arrowNext.style.display = normal || this.#pixels >= this.#endPoint ? "none" : DISPLAY_VALUE;
     }
+
+    /**
+     * Crea y gestiona los botones indicadores (puntos) del carrusel.
+     *
+     * @private
+     * @returns {void}
+     */
+    #createPointer() {
+        if (this.#enabledPoint) {
+            const $BUTTONS_PANEL = document.createElement("div");
+            $BUTTONS_PANEL.classList.add("carousel__buttons");
+            $BUTTONS_PANEL.dataset.item = 0;
+
+            const $FRAGMENT = document.createDocumentFragment();
+
+            const { children = [] } = this.#track;
+            const BUTTONS = [];
+
+            for (let index = 0; index < children.length; index++) {
+                const $BUTTON = document.createElement("button");
+                $BUTTON.dataset.index = index;
+                BUTTONS.push($BUTTON);
+                if (index === 0) $BUTTON.classList.add("carousel__button--active");
+                $FRAGMENT.appendChild($BUTTON);
+            }
+
+            $BUTTONS_PANEL.appendChild($FRAGMENT);
+            this.#track.parentNode.appendChild($BUTTONS_PANEL);
+
+            $BUTTONS_PANEL.addEventListener("click", (event) => {
+                const BUTTON = event.target.closest("button");
+                if (!BUTTON) return;
+
+                const index = parseInt(BUTTON.dataset.index, 10);
+                const OLD_ITEM = parseInt($BUTTONS_PANEL.dataset.item, 0);
+                this.#updateActiveButton(BUTTONS, $BUTTONS_PANEL, OLD_ITEM, index);
+            });
+        }
+    }
+
+    /**
+     * Actualiza el botón activo, los datos asociados y realiza el movimiento.
+     *
+     * @private
+     * @param {Array} buttons - Lista de botones del carrusel
+     * @param {HTMLElement} container - Contenedor de los botones
+     * @param {number} oldIndex - Índice del botón previamente activo
+     * @param {number} newIndex - Índice del nuevo botón a activar
+     * @returns {void}
+     */
+    #updateActiveButton(buttons, container, oldIndex, newIndex) {
+        buttons[oldIndex].classList.remove("carousel__button--active");
+        buttons[newIndex].classList.add("carousel__button--active");
+
+        container.dataset.item = newIndex;
+        this.#pixels = this.#itemSize * newIndex;
+        this.#move();
+    }
+
 }
 
 export default Carousel;
