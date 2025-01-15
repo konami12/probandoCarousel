@@ -44,7 +44,7 @@ section {
         background-color: var(--tablet);
     }
     @media (min-width: 1280px) {
-        background-color: var(--desktop);
+        background-color: var(--primero);
     }
 }
 
@@ -106,9 +106,6 @@ section {
     }
 }
 
-.demo {
-    gap:0;
-}
 
 .carousel__item {
     flex-shrink: 0;
@@ -143,12 +140,12 @@ section {
 
 .carousel__item:nth-child(even),
 .carousel__item2:nth-child(even) {
-    background-color: var(--septimo);
+    background-color: var(--quinto);
 }
 
 .carousel__item:nth-child(odd),
 .carousel__item2:nth-child(odd) {
-    background-color: var(--quinto);
+    background-color: var(--cuarto);
 }
 
 
@@ -171,4 +168,58 @@ section {
     .carousel__button--active {
         opacity: 1;
     }
+}
+
+/* Control para ligth box */
+.demoButton {
+    padding: 10px;
+    background-color: var(--septimo);
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    button {
+        padding: 10px;
+        font-weight: 800;
+        font-size: 20px;
+    }
+}
+
+
+.carousel__viewBox--3d {
+    perspective: 1200px;
+    display: flex; /* Asegura que los ítems estén centrados */
+    justify-content: center; /* Centra los ítems horizontalmente */
+    align-items: center; /* Centra los ítems verticalmente */
+    overflow: hidden; /* Evita que se salgan del contenedor */
+}
+
+.carousel__track--3d {
+    box-sizing: content-box;
+    z-index: 1;
+    display: flex;
+    transition-property: transform;
+    gap: 0;
+    transform-style: preserve-3d;
+}
+
+
+.carousel__item--3d {
+    height: 645px;
+    width: 363px;
+    transform: translateZ(0); /* Asegura que estén en el mismo plano 3D */
+    text-align: center;
+    position: relative;
+    > span:first-of-type {
+        display: none;
+    }
+}
+
+.carousel__item--mask span:first-of-type {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: var(--primero);
+    position: absolute;
+    opacity: .5;
+    cursor: pointer;
 }
