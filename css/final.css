@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
+
 :root {
     --primero: #272822;
     --segundo: #F92672;
@@ -11,6 +13,7 @@
     --mobile: #4d0000;
     --tablet: #00004d;
     --desktop: #004d00;
+    --font: "Lexend", serif;
 }
 
 * {
@@ -23,6 +26,7 @@ body {
     background-color: var(--primero);
     overflow-x: hidden;
     padding-bottom: 200px;
+    font-family: var(--font);
 }
 
 main {
@@ -32,6 +36,7 @@ main {
     align-items: center;
     place-content: center;
     flex-direction: column;
+    padding-top: 5rem;
 }
 
 section {
@@ -39,13 +44,40 @@ section {
     max-width: 1440px;
     height: fit-content;
     width: 100%;
-    margin-top: 5rem;
     @media (min-width: 834px) {
         background-color: var(--tablet);
     }
     @media (min-width: 1280px) {
         background-color: var(--primero);
     }
+    h2 {
+        font-size: 40px;
+        color: var(--septimo);
+        display: flex;
+        align-items: center;
+        padding: 8px 2px;
+        margin-bottom: 15px;
+        &::before {
+            content: "🔥";
+            font-size: 30px;
+            margin-right: 10px;
+            text-transform: uppercase;
+        }
+    }
+}
+
+.space {
+    width: 100%;
+    padding: 10px;
+    margin-top:80px;
+    margin-bottom:80px;
+    max-width: 1440px;
+    border-radius: 40px;
+    background-color: var(--septimo);
+}
+
+.jump {
+    margin-top: 30px;
 }
 
 /** Estilos para el carousel **/
@@ -172,6 +204,7 @@ section {
 
 /* Control para ligth box */
 .demoButton {
+    margin-top:30px;
     padding: 10px;
     background-color: var(--septimo);
     display: flex;
@@ -180,7 +213,7 @@ section {
     button {
         padding: 10px;
         font-weight: 800;
-        font-size: 20px;
+        font-size: 30px;
     }
 }
 

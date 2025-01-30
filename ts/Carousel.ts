@@ -6,24 +6,31 @@ type Settings = {
 	arrowPrevious: string;
 	time: number;
     moveItems: number;
-    enabledPoint: boolean;
+    enabledPagination: boolean;
+    itemPagintion?: boolean;
+    secondTrack: string
 };
 
-
 class Carousel {
-    private arrowNext: ItemDom;       // Selector para la flecha de siguiente
-    private arrowPrevious: ItemDom;   // Selector para la flecha de anterior
-    private endPoint: number = 0;         // Valor del desplazamiento máximo permitido
-    private itemSize: number = 0;         // Tamaño de un elemento del carrusel, incluyendo el gap
-    private moveItems: number = 0;        // Número de elementos a mover por cada acción de "anterior" o "siguiente"
-    private oldTrack: number = 0;         // Almacena el ancho del carrusel
-    private pixels: number = 0;           // Valor del desplazamiento actual en píxeles
-    private scroll: number = 0;           // Almacena el scroll máximo permitido
-    private time: number = 0;             // Duración de la animación de transición
-    private track: ItemDom;           // Selector para el contenedor que contiene los elementos del carrusel
-    private viewItems: number = 0;        // Número de elementos visibles dentro del carrusel
-    private enabledPoint: boolean = false; // Permite la creación de botones de navegación
 
+    /* eslint-disable no-multi-spaces */
+    private arrowNext: ItemDom = null;          // Selector para la flecha de siguiente
+    private arrowPrevious: ItemDom = null;      // Selector para la flecha de anterior
+    private endPoint: number = 0;               // Valor del desplazamiento máximo permitido
+    private itemSize: number = 0;               // Tamaño de un elemento del carrusel, incluyendo el gap
+    private moveItems: number = 0;              // Número de elementos a mover por cada acción de "anterior" o "siguiente"
+    private oldTrack: number = 0;               // Almacena el ancho del carrusel
+    private pixels: number = 0;                 // Valor del desplazamiento actual en píxeles
+    private scroll: number = 0;                 // Almacena el scroll máximo permitido
+    private time: number = 0;                   // Duración de la animación de transición
+    private track: ItemDom = null;              // Selector para el contenedor que contiene los elementos del carrusel
+    private secondTrack: ItemDom = null;        // Selector para el contenedor que contiene los elementos del carrusel
+    private viewItems: number = 0;              // Número de elementos visibles dentro del carrusel
+    private enabledPagination: boolean = false; // Permite la creación de botones de navegación
+    private buttonList: Array<ItemDom> = [];    // Lista de botones del carrusel
+    private buttonPanel: ItemDom = null;        // Referencia al contenedor de los botones
+    private counter: number = 0;                // Contador de posicion del carrusel
+    private itemPagintion: boolean = false;     // Habilita la paginación de los elementos
 
 
     /**
@@ -32,22 +39,26 @@ class Carousel {
      * @param {Settings} setting - configuración del carrusel
      * @returns {void}
      */
-    constructor(setting: Settings) {
+    init(setting: Settings) {
         const {
             track = "empty",
+            secondTrack = "empty",
             arrowNext = "empty",
             arrowPrevious = "empty",
             time = 500,
             moveItems = 0,
-            enabledPoint = false,
+            enabledPagination = false,
+            itemPagintion = false,
         } = setting;
 
         this.track = document.querySelector(track) || null;
+        this.secondTrack = document.querySelector(secondTrack) || null;
         this.arrowNext = document.querySelector(arrowNext) || null;
         this.arrowPrevious = document.querySelector(arrowPrevious) || null;
         this.time = time;
         this.moveItems = moveItems;
-        this.enabledPoint = enabledPoint;
+        this.enabledPagination = enabledPagination;
+        this.itemPagintion = itemPagintion;
 
         this.setup();
         this.bindEvents();
@@ -69,10 +80,21 @@ class Carousel {
      * @returns {void}
      */
     private action(isNext:boolean = false): void {
-        const MOVEMENT_SIZE: number = (this.itemSize * this.viewItems);
+        const MOVEMENT_SIZE: number = (this.itemSize * this.moveItems);
         this.pixels = isNext
         ? Math.min(this.pixels + MOVEMENT_SIZE, this.endPoint)
         : Math.max(this.pixels - MOVEMENT_SIZE, 0);
+        this.counter += isNext ? 1 : -1;
+        if (this.enabledPagination) {
+            const OLD = (isNext) ? this.counter-1 : this.counter+1;
+            this.updateActiveButton(OLD, this.counter);
+            this.move();
+        }
+        if (this.secondTrack) {
+            const SECOND_SON = Array.from(this.secondTrack.children);
+            (SECOND_SON[this.counter] as HTMLElement).click();
+        }
+
         this.move();
     };
 
@@ -131,6 +153,7 @@ class Carousel {
         if (!this.track) return;
         this.track.style.transform = `translate3d(-${Math.min(this.pixels, this.endPoint)}px, 0px, 0px)`;
         this.track.style.transition = `transform ${this.time}ms ease`;
+        this.track.dataset.position = (this.counter +1).toString();
         this.updateArrowVisibility();
     }
 
@@ -160,7 +183,13 @@ class Carousel {
             this.track.style.overflow = "initial";
             this.pixels = (reset && this.pixels > 0) ? 0 : this.pixels;
             this.oldTrack = trackWidth;
-            if (isActive) this.move();
+
+            if (isActive) {
+                this.move();
+                const CHILDREN = Array.from(children);
+                this.paginationItem(CHILDREN)
+            }
+            this.activeSecondSlider();
         } else {
             if (this.track) {
                 this.track.style.overflow = "auto";
@@ -190,34 +219,32 @@ class Carousel {
      * @private
      * @returns {void}
      */
-    private createPointer() {
-        if (this.enabledPoint && this.track) {
-            const $BUTTONS_PANEL = document.createElement("div");
-            $BUTTONS_PANEL.classList.add("carousel__buttons");
-            $BUTTONS_PANEL.dataset.item = "0";
+    private createPointer(): void {
+        if (this.enabledPagination && this.track) {
+            this.buttonPanel = document.createElement("div");
+            this.buttonPanel.classList.add("carousel__buttons");
+            this.buttonPanel.dataset.item = "0";
 
             const $FRAGMENT = document.createDocumentFragment();
 
-            const { children = [] } = this.track;
-            const BUTTONS: Array<HTMLElement> = [];
-
+            const children: HTMLCollection = this.track.children;
             for (let index = 0; index < children.length; index++) {
                 const $BUTTON = document.createElement("button");
                 $BUTTON.dataset.index = index.toString();
-                BUTTONS.push($BUTTON);
+                this.buttonList.push($BUTTON);
                 if (index === 0) $BUTTON.classList.add("carousel__button--active");
                 $FRAGMENT.appendChild($BUTTON);
             }
 
-            $BUTTONS_PANEL.appendChild($FRAGMENT);
-            this?.track?.parentNode?.appendChild($BUTTONS_PANEL);
+            this.buttonPanel.appendChild($FRAGMENT);
+            this?.track?.parentNode?.appendChild(this.buttonPanel);
 
-            $BUTTONS_PANEL.addEventListener("click", (event) => {
+            this.buttonPanel.addEventListener("click", (event) => {
                 const BUTTON = (event?.target as Element)?.closest("button") || null;
                 if (!BUTTON) return;
                 const DATA_INDEX: string = BUTTON.dataset.index || "0";
-                const OLD_ITEM:string = $BUTTONS_PANEL.dataset.item || "0";
-                this.updateActiveButton(BUTTONS, $BUTTONS_PANEL, parseInt(OLD_ITEM, 10), parseInt(DATA_INDEX, 10));
+                const OLD_ITEM:string = this.buttonPanel?.dataset.item || "0";
+                this.updateActiveButton(parseInt(OLD_ITEM, 10), parseInt(DATA_INDEX, 10));
             });
         }
     }
@@ -232,15 +259,64 @@ class Carousel {
      * @param {number} newIndex - Índice del nuevo botón a activar
      * @returns {void}
      */
-    private updateActiveButton(buttons:Array<HTMLElement>, container: HTMLElement, oldIndex: number, newIndex:number) {
-        buttons[oldIndex].classList.remove("carousel__button--active");
-        buttons[newIndex].classList.add("carousel__button--active");
+    private updateActiveButton(oldIndex: number, newIndex:number): void {
+        if (this.buttonList[oldIndex] && this.buttonList[newIndex] && this.buttonPanel) {
+            this.buttonList[oldIndex].classList.remove("carousel__button--active");
+            this.buttonList[newIndex].classList.add("carousel__button--active");
 
-        container.dataset.item = newIndex.toString();
-        this.pixels = this.itemSize * newIndex;
-        this.move();
+            this.buttonPanel.dataset.item = newIndex.toString();
+            this.pixels = this.itemSize * newIndex;
+            this.move();
+        }
     }
 
+    /**
+     * Permite que los items del carrusel puedan mover el carousel.
+     *
+     * @param   {Array<Element>}  children  Listado de los items disponibles en el carrusel.
+     *
+     * @returns  {void}
+     */
+    private paginationItem(children: Array<Element>): void {
+        if (this.itemPagintion && this.moveItems === 1) {
+            Array.from(children).forEach((child, index) => {
+                const element = child as HTMLElement;
+                element.dataset.index = String(index);
+                element.addEventListener("click", () => {
+                    const AUX =this.itemSize * Number(element.dataset.index);
+                    this.pixels = Math.min(AUX, this.endPoint);
+                    this.move();
+                });
+            });
+        }
+    }
+    /**
+     * Permite manipular el segundo carrusel desde el carousel padre
+     *
+     * @return  {void}
+     */
+    private activeSecondSlider(): void {
+        if (this.secondTrack) {
+            const SECOND_SON = Array.from(this.secondTrack.children);
+            this.secondTrack.addEventListener("click", (event) => {
+                const TARGET = event.target as Element;
+                let INDEX = SECOND_SON.indexOf(TARGET);  // Encuentra la posición del elemento clickeado
+                const AUX =this.itemSize * INDEX;
+                this.pixels = Math.min(AUX, this.endPoint);
+                this.counter = INDEX;
+                this.move();
+            });
+        }
+    }
+
+    /**
+     * Devuelve la posición actual del carrusel.
+     *
+     * @returns {number} - Posición actual del carrusel.
+     */
+	get position(): number {
+        return this.counter;
+    }
 }
 
 export default Carousel;

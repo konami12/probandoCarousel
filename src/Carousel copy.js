@@ -1,5 +1,11 @@
 class Carousel {
-    constructor() {
+    /**
+     * Inicializa una nueva instancia de la clase Carousel.
+     *
+     * @param {Settings} setting - configuración del carrusel
+     * @returns {void}
+     */
+    constructor(setting) {
         /* eslint-disable no-multi-spaces */
         this.arrowNext = null; // Selector para la flecha de siguiente
         this.arrowPrevious = null; // Selector para la flecha de anterior
@@ -11,29 +17,19 @@ class Carousel {
         this.scroll = 0; // Almacena el scroll máximo permitido
         this.time = 0; // Duración de la animación de transición
         this.track = null; // Selector para el contenedor que contiene los elementos del carrusel
-        this.secondTrack = null; // Selector para el contenedor que contiene los elementos del carrusel
         this.viewItems = 0; // Número de elementos visibles dentro del carrusel
-        this.enabledPagination = false; // Permite la creación de botones de navegación
+        this.enabledPoint = false; // Permite la creación de botones de navegación
         this.buttonList = []; // Lista de botones del carrusel
         this.buttonPanel = null; // Referencia al contenedor de los botones
         this.counter = 0; // Contador de posicion del carrusel
         this.itemPagintion = false; // Habilita la paginación de los elementos
-    }
-    /**
-     * Inicializa una nueva instancia de la clase Carousel.
-     *
-     * @param {Settings} setting - configuración del carrusel
-     * @returns {void}
-     */
-    init(setting) {
-        const { track = "empty", secondTrack = "empty", arrowNext = "empty", arrowPrevious = "empty", time = 500, moveItems = 0, enabledPagination = false, itemPagintion = false, } = setting;
+        const { track = "empty", arrowNext = "empty", arrowPrevious = "empty", time = 500, moveItems = 0, enabledPoint = false, itemPagintion = false, } = setting;
         this.track = document.querySelector(track) || null;
-        this.secondTrack = document.querySelector(secondTrack) || null;
         this.arrowNext = document.querySelector(arrowNext) || null;
         this.arrowPrevious = document.querySelector(arrowPrevious) || null;
         this.time = time;
         this.moveItems = moveItems;
-        this.enabledPagination = enabledPagination;
+        this.enabledPoint = enabledPoint;
         this.itemPagintion = itemPagintion;
         this.setup();
         this.bindEvents();
@@ -58,15 +54,11 @@ class Carousel {
         this.pixels = isNext
             ? Math.min(this.pixels + MOVEMENT_SIZE, this.endPoint)
             : Math.max(this.pixels - MOVEMENT_SIZE, 0);
-        this.counter += isNext ? 1 : -1;
-        if (this.enabledPagination) {
+        if (this.enabledPoint) {
+            this.counter += isNext ? 1 : -1;
             const OLD = (isNext) ? this.counter - 1 : this.counter + 1;
             this.updateActiveButton(OLD, this.counter);
             this.move();
-        }
-        if (this.secondTrack) {
-            const SECOND_SON = Array.from(this.secondTrack.children);
-            SECOND_SON[this.counter].click();
         }
         this.move();
     }
@@ -124,7 +116,6 @@ class Carousel {
             return;
         this.track.style.transform = `translate3d(-${Math.min(this.pixels, this.endPoint)}px, 0px, 0px)`;
         this.track.style.transition = `transform ${this.time}ms ease`;
-        this.track.dataset.position = (this.counter + 1).toString();
         this.updateArrowVisibility();
     }
     /**
@@ -160,7 +151,6 @@ class Carousel {
                 const CHILDREN = Array.from(children);
                 this.paginationItem(CHILDREN);
             }
-            this.activeSecondSlider();
         }
         else {
             if (this.track) {
@@ -192,7 +182,7 @@ class Carousel {
      */
     createPointer() {
         var _a, _b;
-        if (this.enabledPagination && this.track) {
+        if (this.enabledPoint && this.track) {
             this.buttonPanel = document.createElement("div");
             this.buttonPanel.classList.add("carousel__buttons");
             this.buttonPanel.dataset.item = "0";
@@ -257,32 +247,6 @@ class Carousel {
                 });
             });
         }
-    }
-    /**
-     * Permite manipular el segundo carrusel desde el carousel padre
-     *
-     * @return  {void}
-     */
-    activeSecondSlider() {
-        if (this.secondTrack) {
-            const SECOND_SON = Array.from(this.secondTrack.children);
-            this.secondTrack.addEventListener("click", (event) => {
-                const TARGET = event.target;
-                let INDEX = SECOND_SON.indexOf(TARGET); // Encuentra la posición del elemento clickeado
-                const AUX = this.itemSize * INDEX;
-                this.pixels = Math.min(AUX, this.endPoint);
-                this.counter = INDEX;
-                this.move();
-            });
-        }
-    }
-    /**
-     * Devuelve la posición actual del carrusel.
-     *
-     * @returns {number} - Posición actual del carrusel.
-     */
-    get position() {
-        return this.counter;
     }
 }
 export default Carousel;
