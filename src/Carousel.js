@@ -235,6 +235,7 @@ class Carousel {
             this.buttonList[newIndex].classList.add("carousel__button--active");
             this.buttonPanel.dataset.item = newIndex.toString();
             this.pixels = this.itemSize * newIndex;
+            this.counter = newIndex;
             this.move();
         }
     }
