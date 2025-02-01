@@ -3,6 +3,17 @@ import Axis3D from "./Axis3D.js";
 
 document.onreadystatechange = () => {
     if (document.readyState === 'complete') {
+ 
+ 
+        new Carousel().init({
+            arrowPrevious:"#vertical-previous",
+            arrowNext:"#vertical-next",
+            track:"#vertical-track",
+            moveItems: 1,
+            isVertical: true,
+        });
+ 
+ 
         new Carousel().init({
             arrowPrevious:"#card-by-card-previous",
             arrowNext:"#card-by-card-next",

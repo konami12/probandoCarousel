@@ -106,7 +106,7 @@ class Carousel {
      */
     #move() {
         if (!this.#track) return;
-        this.#track.style.transform = `translate3d(-${Math.min(this.#pixels, this.#endPoint)}px, 0px, 0px)`;
+        this.#track.style.transform = `translate3d(0px, -${Math.min(this.#pixels, this.#endPoint)}px, 0px)`;
         this.#track.style.transition = `transform ${this.#time}ms ease`;
         this.#updateArrowVisibility();
     }

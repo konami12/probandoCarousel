@@ -19,6 +19,7 @@ class Carousel {
         this.counter = 0; // Contador de posicion del carrusel
         this.itemPagintion = false; // Habilita la paginación de los elementos
         this.itemClass = ""; // Clase de los items del carrusel
+        this.isVertical = false; // Indica si el carrusel es vertical
     }
     /**
      * Inicializa una nueva instancia de la clase Carousel.
@@ -27,7 +28,7 @@ class Carousel {
      * @returns {void}
      */
     init(setting) {
-        const { track = "empty", secondTrack = "empty", arrowNext = "empty", arrowPrevious = "empty", time = 500, moveItems = 0, enabledPagination = false, itemPagintion = false, itemClass = "", } = setting;
+        const { track = "empty", secondTrack = "empty", arrowNext = "empty", arrowPrevious = "empty", time = 500, moveItems = 0, enabledPagination = false, itemPagintion = false, itemClass = "", isVertical = false, } = setting;
         this.track = document.querySelector(track) || null;
         this.secondTrack = document.querySelector(secondTrack) || null;
         this.arrowNext = document.querySelector(arrowNext) || null;
@@ -37,6 +38,7 @@ class Carousel {
         this.enabledPagination = enabledPagination;
         this.itemPagintion = itemPagintion;
         this.itemClass = itemClass;
+        this.isVertical = isVertical;
         this.setup();
         this.bindEvents();
         this.createPointer();
@@ -126,7 +128,8 @@ class Carousel {
     move() {
         if (!this.track)
             return;
-        this.track.style.transform = `translate3d(-${Math.min(this.pixels, this.endPoint)}px, 0px, 0px)`;
+        const AXIS = this.isVertical ? `0, -${Math.min(this.pixels, this.endPoint)}px` : `-${Math.min(this.pixels, this.endPoint)}px, 0`;
+        this.track.style.transform = `translate3d(${AXIS}, 0)`;
         this.track.style.transition = `transform ${this.time}ms ease`;
         this.track.dataset.position = (this.counter + 1).toString();
         this.updateArrowVisibility();
@@ -143,22 +146,24 @@ class Carousel {
     setup(reset = false) {
         var _a;
         if (this.track && this.isDesktop()) {
-            const { children = [], offsetWidth: trackWidth } = this.track;
+            const { children = [], offsetWidth: trackWidth, offsetHeight: trackHight } = this.track;
             if (!children || children.length === 0)
                 return;
-            const { offsetWidth: itemWidth } = children[0];
+            const { offsetWidth: itemWidth, offsetHeight: itemHight } = children[0];
+            const ITEM_SIZE = this.isVertical ? itemHight : itemWidth;
+            const TRACK_SIZE = this.isVertical ? trackHight : trackWidth;
             const AUX = document.defaultView ? (_a = document.defaultView.getComputedStyle(this.track)) === null || _a === void 0 ? void 0 : _a.gap : "0";
             const GAP = parseInt(AUX, 10);
-            this.viewItems = Math.floor(trackWidth / (itemWidth));
-            this.itemSize = itemWidth + GAP;
-            this.scroll = GAP + trackWidth;
-            this.endPoint = (children.length * this.itemSize) - trackWidth - GAP;
+            this.viewItems = Math.floor(TRACK_SIZE / (ITEM_SIZE));
+            this.itemSize = ITEM_SIZE + GAP;
+            this.scroll = GAP + TRACK_SIZE;
+            this.endPoint = (children.length * this.itemSize) - TRACK_SIZE - GAP;
             this.scroll = (this.endPoint - this.scroll) + this.itemSize;
             this.moveItems = (this.moveItems === 0 || this.moveItems > this.viewItems) ? this.viewItems : this.moveItems;
             const isActive = this.viewItems < children.length;
             this.track.style.overflow = "initial";
             this.pixels = (reset && this.pixels > 0) ? 0 : this.pixels;
-            this.oldTrack = trackWidth;
+            this.oldTrack = TRACK_SIZE;
             if (isActive) {
                 this.move();
                 const CHILDREN = Array.from(children);
