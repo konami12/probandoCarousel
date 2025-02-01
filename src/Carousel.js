@@ -18,6 +18,7 @@ class Carousel {
         this.buttonPanel = null; // Referencia al contenedor de los botones
         this.counter = 0; // Contador de posicion del carrusel
         this.itemPagintion = false; // Habilita la paginación de los elementos
+        this.itemClass = ""; // Clase de los items del carrusel
     }
     /**
      * Inicializa una nueva instancia de la clase Carousel.
@@ -26,7 +27,7 @@ class Carousel {
      * @returns {void}
      */
     init(setting) {
-        const { track = "empty", secondTrack = "empty", arrowNext = "empty", arrowPrevious = "empty", time = 500, moveItems = 0, enabledPagination = false, itemPagintion = false, } = setting;
+        const { track = "empty", secondTrack = "empty", arrowNext = "empty", arrowPrevious = "empty", time = 500, moveItems = 0, enabledPagination = false, itemPagintion = false, itemClass = "", } = setting;
         this.track = document.querySelector(track) || null;
         this.secondTrack = document.querySelector(secondTrack) || null;
         this.arrowNext = document.querySelector(arrowNext) || null;
@@ -35,6 +36,7 @@ class Carousel {
         this.moveItems = moveItems;
         this.enabledPagination = enabledPagination;
         this.itemPagintion = itemPagintion;
+        this.itemClass = itemClass;
         this.setup();
         this.bindEvents();
         this.createPointer();
@@ -54,6 +56,7 @@ class Carousel {
      * @returns {void}
      */
     action(isNext = false) {
+        var _a;
         const MOVEMENT_SIZE = (this.itemSize * this.moveItems);
         this.pixels = isNext
             ? Math.min(this.pixels + MOVEMENT_SIZE, this.endPoint)
@@ -66,6 +69,7 @@ class Carousel {
         }
         if (this.secondTrack) {
             const SECOND_SON = Array.from(this.secondTrack.children);
+            (_a = this.secondTrack.querySelector(`.${this.itemClass}`)) === null || _a === void 0 ? void 0 : _a.classList.remove(this.itemClass);
             SECOND_SON[this.counter].click();
         }
         this.move();
@@ -235,7 +239,6 @@ class Carousel {
             this.buttonList[newIndex].classList.add("carousel__button--active");
             this.buttonPanel.dataset.item = newIndex.toString();
             this.pixels = this.itemSize * newIndex;
-            this.counter = newIndex;
             this.move();
         }
     }
@@ -247,11 +250,18 @@ class Carousel {
      * @returns  {void}
      */
     paginationItem(children) {
-        if (this.itemPagintion && this.moveItems === 1) {
+        if (this.itemPagintion && this.moveItems === 1 && this.track) {
             Array.from(children).forEach((child, index) => {
                 const element = child;
                 element.dataset.index = String(index);
+                if (index === 0 && this.itemClass)
+                    element.classList.add(this.itemClass);
                 element.addEventListener("click", () => {
+                    var _a, _b;
+                    if (this.itemClass) {
+                        (_b = (_a = this.track) === null || _a === void 0 ? void 0 : _a.querySelector(`.${this.itemClass}`)) === null || _b === void 0 ? void 0 : _b.classList.remove(this.itemClass);
+                        element.classList.add(this.itemClass);
+                    }
                     const AUX = this.itemSize * Number(element.dataset.index);
                     this.pixels = Math.min(AUX, this.endPoint);
                     this.move();

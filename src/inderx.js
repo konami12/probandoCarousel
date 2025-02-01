@@ -34,13 +34,15 @@ document.onreadystatechange = () => {
             arrowPrevious: "#master-previous",
             track: "#master-track",
             secondTrack: "#slave-track",
+            itemClass: "mask",
         });
 
         new Carousel().init({
             track: "#slave-track",
             moveItems:1,
             itemPagintion: true,
-            time: 300
+            time: 300,
+            itemClass: "mask",
         });
 
         new Axis3D({
@@ -54,7 +56,5 @@ document.onreadystatechange = () => {
             mask: "carousel__item--mask",
             advance: 0,
         });
-
-
     }
 };

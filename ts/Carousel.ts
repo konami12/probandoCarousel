@@ -8,7 +8,8 @@ type Settings = {
     moveItems: number;
     enabledPagination: boolean;
     itemPagintion?: boolean;
-    secondTrack: string
+    secondTrack: string;
+    itemClass?: string;
 };
 
 class Carousel {
@@ -31,6 +32,7 @@ class Carousel {
     private buttonPanel: ItemDom = null;        // Referencia al contenedor de los botones
     private counter: number = 0;                // Contador de posicion del carrusel
     private itemPagintion: boolean = false;     // Habilita la paginación de los elementos
+    private itemClass: string = "";             // Clase de los items del carrusel
 
 
     /**
@@ -49,6 +51,7 @@ class Carousel {
             moveItems = 0,
             enabledPagination = false,
             itemPagintion = false,
+            itemClass = "",
         } = setting;
 
         this.track = document.querySelector(track) || null;
@@ -59,7 +62,7 @@ class Carousel {
         this.moveItems = moveItems;
         this.enabledPagination = enabledPagination;
         this.itemPagintion = itemPagintion;
-
+        this.itemClass = itemClass;
         this.setup();
         this.bindEvents();
         this.createPointer();
@@ -92,6 +95,7 @@ class Carousel {
         }
         if (this.secondTrack) {
             const SECOND_SON = Array.from(this.secondTrack.children);
+            this.secondTrack.querySelector(`.${this.itemClass}`)?.classList.remove(this.itemClass);
             (SECOND_SON[this.counter] as HTMLElement).click();
         }
 
@@ -278,11 +282,16 @@ class Carousel {
      * @returns  {void}
      */
     private paginationItem(children: Array<Element>): void {
-        if (this.itemPagintion && this.moveItems === 1) {
+        if (this.itemPagintion && this.moveItems === 1 && this.track) {
             Array.from(children).forEach((child, index) => {
                 const element = child as HTMLElement;
                 element.dataset.index = String(index);
+                if (index === 0 && this.itemClass) element.classList.add(this.itemClass);
                 element.addEventListener("click", () => {
+                    if (this.itemClass) {
+                        this.track?.querySelector(`.${this.itemClass}`)?.classList.remove(this.itemClass);
+                        element.classList.add(this.itemClass);
+                    }
                     const AUX =this.itemSize * Number(element.dataset.index);
                     this.pixels = Math.min(AUX, this.endPoint);
                     this.move();
