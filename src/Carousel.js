@@ -20,6 +20,10 @@ class Carousel {
         this.itemPagintion = false; // Habilita la paginación de los elementos
         this.itemClass = ""; // Clase de los items del carrusel
         this.isVertical = false; // Indica si el carrusel es vertical
+        this.startAxis = 0;
+        this.isDragging = false;
+        this.enabledTouch = false;
+        this.observation = null;
     }
     /**
      * Inicializa una nueva instancia de la clase Carousel.
@@ -28,7 +32,7 @@ class Carousel {
      * @returns {void}
      */
     init(setting) {
-        const { track = "empty", secondTrack = "empty", arrowNext = "empty", arrowPrevious = "empty", time = 500, moveItems = 0, enabledPagination = false, itemPagintion = false, itemClass = "", isVertical = false, } = setting;
+        const { track = "empty", secondTrack = "empty", arrowNext = "empty", arrowPrevious = "empty", time = 500, moveItems = 0, enabledPagination = false, itemPagintion = false, itemClass = "", isVertical = false, enabledTouch = true, } = setting;
         this.track = document.querySelector(track) || null;
         this.secondTrack = document.querySelector(secondTrack) || null;
         this.arrowNext = document.querySelector(arrowNext) || null;
@@ -39,6 +43,7 @@ class Carousel {
         this.itemPagintion = itemPagintion;
         this.itemClass = itemClass;
         this.isVertical = isVertical;
+        this.enabledTouch = enabledTouch;
         this.setup();
         this.bindEvents();
         this.createPointer();
@@ -89,6 +94,15 @@ class Carousel {
             this.arrowNext.addEventListener("click", () => this.action(true));
             this.arrowPrevious.addEventListener("click", () => this.action());
         }
+        if (this.track && this.enabledTouch && !this.isDesktop()) {
+            this.track.addEventListener("touchstart", this.handleTouchStart.bind(this));
+            this.track.addEventListener("touchmove", this.handleTouchMove.bind(this));
+            this.track.addEventListener("touchend", this.handleTouchEnd.bind(this));
+            //            if (this.track) {
+            //                this.track.style.overflow = "auto";
+            //                this.track.style.scrollSnapType = `${this.isVertical ? "y" : "x"} mandatory`;
+            //            }
+        }
     }
     /**
      * Función que implementa un mecanismo de debounce.
@@ -132,7 +146,8 @@ class Carousel {
         this.track.style.transform = `translate3d(${AXIS}, 0)`;
         this.track.style.transition = `transform ${this.time}ms ease`;
         this.track.dataset.position = (this.counter + 1).toString();
-        this.updateArrowVisibility();
+        if (this.isDesktop())
+            this.updateArrowVisibility();
     }
     /**
      * Configura el carrusel dependiendo del tamaño de la ventana.
@@ -145,7 +160,7 @@ class Carousel {
      */
     setup(reset = false) {
         var _a;
-        if (this.track && this.isDesktop()) {
+        if (this.track) {
             const { children = [], offsetWidth: trackWidth, offsetHeight: trackHight } = this.track;
             if (!children || children.length === 0)
                 return;
@@ -161,7 +176,7 @@ class Carousel {
             this.scroll = (this.endPoint - this.scroll) + this.itemSize;
             this.moveItems = (this.moveItems === 0 || this.moveItems > this.viewItems) ? this.viewItems : this.moveItems;
             const isActive = this.viewItems < children.length;
-            this.track.style.overflow = "initial";
+            //this.track.style.overflow = "initial";
             this.pixels = (reset && this.pixels > 0) ? 0 : this.pixels;
             this.oldTrack = TRACK_SIZE;
             if (isActive) {
@@ -170,12 +185,6 @@ class Carousel {
                 this.paginationItem(CHILDREN);
             }
             this.activeSecondSlider();
-        }
-        else {
-            if (this.track) {
-                this.track.style.overflow = "auto";
-            }
-            this.updateArrowVisibility(true);
         }
     }
     /**
@@ -292,6 +301,23 @@ class Carousel {
                 this.move();
             });
         }
+    }
+    handleTouchStart(event) {
+        this.isDragging = true;
+        this.startAxis = this.isVertical ? event.touches[0].clientY : event.touches[0].clientX;
+    }
+    handleTouchMove(event) {
+        if (!this.isDragging)
+            return;
+        const AXIS = this.isVertical ? event.touches[0].clientY : event.touches[0].clientX;
+        const deltaAxis = this.startAxis - AXIS;
+        if (Math.abs(deltaAxis) > 30) {
+            this.action(deltaAxis > 0);
+            this.isDragging = false;
+        }
+    }
+    handleTouchEnd() {
+        this.isDragging = false;
     }
     /**
      * Devuelve la posición actual del carrusel.

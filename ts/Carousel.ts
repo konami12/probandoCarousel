@@ -11,6 +11,7 @@ type Settings = {
     secondTrack: string;
     itemClass?: string;
     isVertical?: boolean;
+    enabledTouch?: boolean;
 };
 
 class Carousel {
@@ -35,6 +36,10 @@ class Carousel {
     private itemPagintion: boolean = false;     // Habilita la paginación de los elementos
     private itemClass: string = "";             // Clase de los items del carrusel
     private isVertical: boolean = false;        // Indica si el carrusel es vertical
+    private startAxis: number = 0;
+    private isDragging: boolean = false;
+    private enabledTouch: boolean = false;
+    private observation:any = null;
 
     /**
      * Inicializa una nueva instancia de la clase Carousel.
@@ -54,6 +59,7 @@ class Carousel {
             itemPagintion = false,
             itemClass = "",
             isVertical = false,
+            enabledTouch = true,
         } = setting;
 
         this.track = document.querySelector(track) || null;
@@ -66,6 +72,7 @@ class Carousel {
         this.itemPagintion = itemPagintion;
         this.itemClass = itemClass;
         this.isVertical = isVertical;
+        this.enabledTouch = enabledTouch;
         this.setup();
         this.bindEvents();
         this.createPointer();
@@ -117,6 +124,18 @@ class Carousel {
             this.arrowNext.addEventListener("click", () => this.action(true));
             this.arrowPrevious.addEventListener("click", () => this.action());
         }
+
+        if (this.track && this.enabledTouch && !this.isDesktop()) {
+            this.track.addEventListener("touchstart", this.handleTouchStart.bind(this));
+            this.track.addEventListener("touchmove", this.handleTouchMove.bind(this));
+            this.track.addEventListener("touchend", this.handleTouchEnd.bind(this));
+//            if (this.track) {
+//                this.track.style.overflow = "auto";
+//                this.track.style.scrollSnapType = `${this.isVertical ? "y" : "x"} mandatory`;
+//            }
+
+        }
+
     }
 
     /**
@@ -162,7 +181,8 @@ class Carousel {
         this.track.style.transform = `translate3d(${AXIS}, 0)`;
         this.track.style.transition = `transform ${this.time}ms ease`;
         this.track.dataset.position = (this.counter +1).toString();
-        this.updateArrowVisibility();
+
+        if (this.isDesktop()) this.updateArrowVisibility();
     }
 
     /**
@@ -175,7 +195,7 @@ class Carousel {
      * @returns {void}
      */
     private setup(reset: boolean = false): void {
-        if (this.track && this.isDesktop()) {
+        if (this.track) {
             const { children = [], offsetWidth: trackWidth, offsetHeight: trackHight } = this.track;
             if (!children || children.length === 0) return;
             const { offsetWidth: itemWidth, offsetHeight: itemHight } = children[0] as HTMLElement;
@@ -190,21 +210,15 @@ class Carousel {
             this.scroll = (this.endPoint - this.scroll) + this.itemSize;
             this.moveItems = (this.moveItems === 0 || this.moveItems > this.viewItems) ? this.viewItems : this.moveItems;
             const isActive = this.viewItems < children.length;
-            this.track.style.overflow = "initial";
+            //this.track.style.overflow = "initial";
             this.pixels = (reset && this.pixels > 0) ? 0 : this.pixels;
             this.oldTrack = TRACK_SIZE;
-
             if (isActive) {
                 this.move();
                 const CHILDREN = Array.from(children);
                 this.paginationItem(CHILDREN)
             }
             this.activeSecondSlider();
-        } else {
-            if (this.track) {
-                this.track.style.overflow = "auto";
-            }
-            this.updateArrowVisibility(true);
         }
     }
 
@@ -323,6 +337,25 @@ class Carousel {
                 this.move();
             });
         }
+    }
+
+    private handleTouchStart(event: TouchEvent): void {
+        this.isDragging = true;
+        this.startAxis = this.isVertical ? event.touches[0].clientY : event.touches[0].clientX;
+    }
+
+    private handleTouchMove(event: TouchEvent): void {
+        if (!this.isDragging) return;
+        const AXIS = this.isVertical ? event.touches[0].clientY : event.touches[0].clientX
+        const deltaAxis = this.startAxis - AXIS;
+        if (Math.abs(deltaAxis) > 30) {
+            this.action(deltaAxis > 0);
+            this.isDragging = false;
+        }
+    }
+
+    private handleTouchEnd(): void {
+        this.isDragging = false;
     }
 
     /**

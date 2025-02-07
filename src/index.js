@@ -4,6 +4,11 @@ import Axis3D from "./Axis3D.js";
 document.onreadystatechange = () => {
     if (document.readyState === 'complete') {
  
+
+        const Hi = (data) => {
+            console.log("Esta es la data %o", data);
+        };
+
  
         new Carousel().init({
             arrowPrevious:"#vertical-previous",
@@ -19,6 +24,9 @@ document.onreadystatechange = () => {
             arrowNext:"#card-by-card-next",
             track:"#card-by-card-track",
             moveItems: 1,
+            itemPagintion: true,
+            enabledTouch: true,
+            time: 300,
         });
 
         new Carousel().init({
